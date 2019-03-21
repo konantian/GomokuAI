@@ -29,7 +29,7 @@ class GtpConnection():
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
-        self.policy_type = "random"
+        self.policy_type = "rule_based"
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -64,10 +64,10 @@ class GtpConnection():
             "play": (2, 'Usage: play {b,w} MOVE'),
             "legal_moves": (1, 'Usage: legal_moves {w,b}')
         }
-        points = GoBoardUtil.generate_legal_moves_gomoku(self.board)
-        moves = self.legalMoves()
-        self.move_to_point=dict(zip(moves,points))
-        self.point_to_move=dict(zip(points,moves))
+        self.points = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        moves = self.mylegalMoves()
+        self.move_to_point=dict(zip(moves,self.points))
+        self.point_to_move=dict(zip(self.points,moves))
     
     def write(self, data):
         stdout.write(data) 
@@ -148,7 +148,7 @@ class GtpConnection():
         """
         self.board.reset(size)
         points = GoBoardUtil.generate_legal_moves_gomoku(self.board)
-        moves = self.legalMoves()
+        moves = self.mylegalMoves()
         self.move_to_point=dict(zip(moves,points))
         self.point_to_move=dict(zip(points,moves))
 
@@ -316,7 +316,45 @@ class GtpConnection():
                      )
 
     #####Assignment 3 starts here##############################
+    def check_start(self):
+        #print(self.board.current_player)
+        #points = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        for point in self.points:
+            if self.board.board[point] == self.board.current_player:
+                return True
+        return False
+
+    def empty_neighbors(self):
+
+        color = self.board.current_player
+        empty_points=[]
+        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        for move in moves:
+            format_moves = self.point_to_move[move]
+            neighbors=self.board.find_all_neighbors(move)
+            for nb in neighbors:
+               if self.board.get_color(nb) == color:
+                   format_moves = self.point_to_move[move]
+                   empty_points.append(format_moves)
+                   break
+
+        return empty_points
+
     def legalMoves(self):
+        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        gtp_moves = []
+        for move in moves:
+            coords = point_to_coord(move, self.board.size)
+            gtp_moves.append(format_point(coords))
+
+        # return gtp_moves
+        start=self.check_start()
+        if not start:
+            return gtp_moves
+        else:
+            return self.empty_neighbors()
+
+    def mylegalMoves(self):
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         gtp_moves = []
         for move in moves:
@@ -331,7 +369,7 @@ class GtpConnection():
 
     def policy_moves(self):
 
-        empty_moves = self.legalMoves()
+        empty_moves = self.mylegalMoves()
         if self.policy_type == "random":
 
             return "Random ",empty_moves
@@ -341,6 +379,8 @@ class GtpConnection():
             block_win_moves=[]
             open_four_moves=[]
             block_open_four_moves=[]
+            open_three_moves=[]
+            block_open_three_moves=[]
             steps = [1,self.board.NS,self.board.NS-1,self.board.NS+1]
             for move in empty_moves:
                 for step in steps:
@@ -353,9 +393,14 @@ class GtpConnection():
                         open_four_moves.append(move)
                     elif self.board.BlockOpenFour(point,GoBoardUtil.opponent(self.board.current_player),step):
                         block_open_four_moves.append(move)
+                    elif self.board.OpenThree(point,self.board.current_player,step):
+                        open_three_moves.append(move)
+                    elif self.board.OpenThree(point,GoBoardUtil.opponent(self.board.current_player),step):
+                        block_open_three_moves.append(move)
 
-            move_types=["Win ","BlockWin ","OpenFour ","BlockOpenFour ","Random "]
-            moves=[win_moves,block_win_moves,open_four_moves,block_open_four_moves,empty_moves]
+
+            move_types=["Win ","BlockWin ","OpenFour ","BlockOpenFour ","OpenThree ","BlockOpenThree ","Random "]
+            moves=[win_moves,block_win_moves,open_four_moves,block_open_four_moves,open_three_moves,block_open_three_moves,empty_moves]
             for i in range(len(move_types)):
                 if moves[i]:
                     return move_types[i],moves[i]
@@ -377,10 +422,10 @@ class GtpConnection():
         board_color = args[0].lower()
         color = color_to_int(board_color)
         game_end, winner = self.board.check_game_end_gomoku()
-        if game_end or len(self.legalMoves()) == 0:
+        if game_end or len(self.mylegalMoves()) == 0:
             if winner == color:
                 self.respond("pass")
-            elif len(self.legalMoves()) == 0:
+            elif len(self.mylegalMoves()) == 0:
                 self.respond("pass")
             else:
                 self.respond("resign")

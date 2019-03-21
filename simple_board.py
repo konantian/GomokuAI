@@ -269,6 +269,10 @@ class SimpleGoBoard(object):
 
 
     ##Assignment 3 starts here
+    def find_all_neighbors(self,point):
+
+        return self._neighbors(point)+self._diag_neighbors(point)
+        
     def endOfGame(self):
 
         end,player = self.check_game_end_gomoku()
@@ -415,5 +419,29 @@ class SimpleGoBoard(object):
             return True
 
         return False
+
+    #.OOO.
+    def OpenThree(self,point,color,step):
+
+        if self.get_color(point-step) == self.get_color(point+3*step) == EMPTY and self.get_color(point+step) == self.get_color(point+2*step) == color:
+            return True
+        if self.get_color(point+step) == self.get_color(point-3*step) == EMPTY and self.get_color(point-step) == self.get_color(point-2*step) == color:
+            return True
+
+        if self.get_color(point+step) == self.get_color(point-3*step) == EMPTY and self.get_color(point-step) == self.get_color(point-2*step) == color:
+            return True
+        if self.get_color(point-step) == self.get_color(point+3*step) == EMPTY and self.get_color(point+step) == self.get_color(point+2*step) == color:
+            return True
+
+        if self.get_color(point-2*step) == self.get_color(point+2*step) == EMPTY and self.get_color(point-step) == self.get_color(point+step) == color:
+            return True
+
+        if self.get_color(point+2*step) == self.get_color(point-2*step) == EMPTY and self.get_color(point+step) == self.get_color(point-step) == color:
+            return True
+
+        return False
+
+
+
 
 
