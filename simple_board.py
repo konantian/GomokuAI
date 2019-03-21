@@ -441,6 +441,16 @@ class SimpleGoBoard(object):
 
         return False
 
+    #.OO.
+    def OpenTwo(self,point,color,step):
+        if self.get_color(point-step) == self.get_color(point+2*step) == EMPTY and self.get_color(point+step) == color:
+            return True
+        if self.get_color(point+step) == self.get_color(point-2*step) == EMPTY and self.get_color(point-step) == color:
+            return True
+
+        return False
+
+
 
 
 

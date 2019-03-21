@@ -370,6 +370,7 @@ class GtpConnection():
     def policy_moves(self):
 
         empty_moves = self.mylegalMoves()
+        neighbor_moves= self.legalMoves()
         if self.policy_type == "random":
 
             return "Random ",empty_moves
@@ -381,6 +382,7 @@ class GtpConnection():
             block_open_four_moves=[]
             open_three_moves=[]
             block_open_three_moves=[]
+            open_two_moves=[]
             steps = [1,self.board.NS,self.board.NS-1,self.board.NS+1]
             for move in empty_moves:
                 for step in steps:
@@ -397,10 +399,11 @@ class GtpConnection():
                         open_three_moves.append(move)
                     elif self.board.OpenThree(point,GoBoardUtil.opponent(self.board.current_player),step):
                         block_open_three_moves.append(move)
+                    elif self.board.OpenTwo(point,self.board.current_player,step):
+                        open_two_moves.append(move)
 
-
-            move_types=["Win ","BlockWin ","OpenFour ","BlockOpenFour ","OpenThree ","BlockOpenThree ","Random "]
-            moves=[win_moves,block_win_moves,open_four_moves,block_open_four_moves,open_three_moves,block_open_three_moves,empty_moves]
+            move_types=["Win ","BlockWin ","OpenFour ","BlockOpenFour ","OpenThree ","BlockOpenThree ","OpenTwo ","Random "]
+            moves=[win_moves,block_win_moves,open_four_moves,block_open_four_moves,open_three_moves,block_open_three_moves,open_two_moves,empty_moves]
             for i in range(len(move_types)):
                 if moves[i]:
                     return move_types[i],moves[i]
